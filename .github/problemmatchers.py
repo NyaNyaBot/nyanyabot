@@ -82,12 +82,11 @@ MATCHERS = {
             "severity": "error",
             "pattern":  [
                 {
-                    "regexp":   r"^([^:]+):(\d+): (B\d+): ([^:]+): (.+)",
-                    "file":     1,
-                    "line":     2,
-                    "code":     3,
-                    "severity": 4,
-                    "message":  5,
+                    "regexp":  r"^([^:]+):(\d+): (B\d+): ([^:]+): (.*)$",
+                    "file":    1,
+                    "line":    2,
+                    "code":    3,
+                    "message": 5,
                 },
             ],
         },
