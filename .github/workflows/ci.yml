@@ -43,7 +43,7 @@ jobs:
           python -m pip install -r requirements-dev.txt
 
       - name: Set up problem matchers
-        run: "python .github/problemmatchers.py pylint ${{ runner.temp }}"
+        run: "python .github/problemmatchers.py ${{ matrix.testenv }} ${{ runner.temp }}"
 
       - name: Run linter
         run: "${{ matrix.testenv }} ${{ matrix.args }}"
