@@ -13,6 +13,14 @@ jobs:
     if: "!contains(github.event.head_commit.message, '[ci skip]')"
     timeout-minutes: 10
     runs-on: ubuntu-20.04
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - testenv: pylint
+            args: "nyanyabot/ --rcfile=.pylintrc"
+          - testenv: bandit
+            args: "-r nyanyabot/"
 
     steps:
       - name: Setup Python
@@ -25,8 +33,8 @@ jobs:
         uses: actions/cache@v2.1.3
         with:
           path: ~/.cache/pip
-          key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements.txt', '**/requirements-dev.txt') }}
-          restore-keys: ${{ runner.os }}-pip-
+          key: ${{ runner.os }}-${{ matrix.testenv }}-${{ hashFiles('**/requirements.txt', '**/requirements-dev.txt') }}
+          restore-keys: ${{ runner.os }}-${{ matrix.testenv }}-
 
       - name: Install dependencies
         run: |
@@ -38,4 +46,4 @@ jobs:
         run: "python .github/problemmatchers.py pylint ${{ runner.temp }}"
 
       - name: Run linter
-        run: "pylint nyanyabot/ --rcfile=.pylintrc"
+        run: "${{ matrix.testenv }} ${{ matrix.args }}"
