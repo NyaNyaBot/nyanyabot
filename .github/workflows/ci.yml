@@ -20,7 +20,7 @@ jobs:
           - testenv: pylint
             args: "nyanyabot/ --rcfile=.pylintrc"
           - testenv: bandit
-            args: "-r nyanyabot/"
+            args: "-r nyanyabot/ -f custom --msg-template \"{relpath}:{line}: {test_id}: {severity}: {msg}\""
 
     steps:
       - name: Setup Python

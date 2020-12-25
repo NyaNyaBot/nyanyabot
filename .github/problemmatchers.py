@@ -76,6 +76,23 @@ MATCHERS = {
         },
     ],
 
+    "bandit": [
+        {
+            # filename.py:3: B307: MEDIUM: Use of possibly insecure function - consider using safer ast.literal_eval.
+            "severity": "error",
+            "pattern":  [
+                {
+                    "regexp":   r"^([^:]+):(\d+): (B\d+): ([^:]+): (.+)",
+                    "file":     1,
+                    "line":     2,
+                    "code":     3,
+                    "severity": 4,
+                    "message":  5,
+                },
+            ],
+        },
+    ],
+
     "tests":  [
         {
             # pytest test summary output
