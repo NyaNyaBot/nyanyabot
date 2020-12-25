@@ -5,6 +5,8 @@ on:
       - 'update-dependencies'
       - 'dependabot/*'
   pull_request:
+env:
+  PY_COLORS: "1"
 
 jobs:
   linters:
