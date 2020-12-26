@@ -1,2 +1,3 @@
 bandit>=1.7.*
+mypy
 pylint>=2.6.*
