@@ -34,7 +34,9 @@ jobs:
       - name: Cache
         uses: actions/cache@v2.1.3
         with:
-          path: ~/.cache/pip
+          path: |
+            .mypy_cache
+            ~/.cache/pip
           key: ${{ runner.os }}-${{ matrix.testenv }}-${{ hashFiles('**/requirements.txt', '**/requirements-dev.txt') }}
           restore-keys: ${{ runner.os }}-${{ matrix.testenv }}-
 
