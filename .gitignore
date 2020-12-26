@@ -5,6 +5,7 @@ __pycache__/
 *.pot
 .env
 .venv
+.mypy_cache
 env/
 venv/
 ENV/
