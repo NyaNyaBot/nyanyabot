@@ -1,10 +1,5 @@
-def main() -> int:
+def main() -> None:
     print("Hello world!")
-    add("2")
-
-
-def add(t: int):
-    return None
 
 
 if __name__ == "__main__":
