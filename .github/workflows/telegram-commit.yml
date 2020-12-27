@@ -17,4 +17,5 @@ jobs:
           disable_web_page_preview: true
           format: html
           message: |
-            ${{ github.event.head_commit.message }}
+            [${{ github.event.head_commit.id }}] <pre>${{ github.event.head_commit.message }}</pre>
+            - ${{ github.event.head_commit.author }}
