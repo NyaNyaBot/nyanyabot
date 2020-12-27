@@ -1,4 +1,4 @@
-name: Telegram message on commit
+name: Telegram on commit
 on:
   push:
     branches:
