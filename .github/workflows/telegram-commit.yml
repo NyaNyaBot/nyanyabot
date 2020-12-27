@@ -1,0 +1,20 @@
+name: Telegram message on commit
+on:
+  push:
+    branches:
+      - 'develop'
+      - 'feature/telegram-action'
+
+jobs:
+  postMessage:
+    runs-on: ubuntu-20.04
+    steps:
+      - name: Send Telegram message
+        uses: appleboy/telegram-action@master
+        with:
+          to: ${{ secrets.TELEGRAM_TO }}
+          token: ${{ secrets.TELEGRAM_TOKEN }}
+          disable_web_page_preview: true
+          format: html
+          message: |
+            ${{ github.event.head_commit.message }}
