@@ -7,10 +7,12 @@ on:
 
 jobs:
   postMessage:
-    env:
-      SHORTSHA: $(git rev-parse --short=7 ${{ github.sha }})
     runs-on: ubuntu-20.04
     steps:
+      - name: Set environment variables
+        env:
+          SHORTSHA: $(git rev-parse --short=7 ${{ github.event.head_commit.id }})
+
       - name: Send Telegram message
         uses: appleboy/telegram-action@master
         with:
