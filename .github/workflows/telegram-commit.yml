@@ -9,12 +9,10 @@ jobs:
   postMessage:
     runs-on: ubuntu-20.04
     steps:
-      - name: Set environment variables
-        env:
-          SHORTSHA: $(git rev-parse --short=7 ${{ github.event.head_commit.id }})
-
       - name: Send Telegram message
         uses: appleboy/telegram-action@master
+        env:
+          SHORTSHA: $(git rev-parse --short=7 ${{ github.event.head_commit.id }})
         with:
           to: ${{ secrets.TELEGRAM_TO }}
           token: ${{ secrets.TELEGRAM_TOKEN }}
