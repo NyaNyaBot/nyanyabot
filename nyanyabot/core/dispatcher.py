@@ -17,7 +17,10 @@ class Dispatcher(dispatcher.Dispatcher):
         super().__init__(*args, **kwargs)
         self.database = database
 
-    def process_update(self, update: Union[str, Update, TelegramError]) -> None:
+    # TODO: Remove pylint ignore when Pylint supports Python 3.9:
+    #       https://github.com/PyCQA/pylint/issues/3882#issuecomment-745148724
+    def process_update(self,
+                       update: Union[str, Update, TelegramError]) -> None:  # pylint: disable=unsubscriptable-object
         if isinstance(update, Update):
             if update.effective_chat:
                 with self.database.engine.begin() as conn:
