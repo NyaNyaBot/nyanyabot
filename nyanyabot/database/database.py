@@ -2,6 +2,9 @@ import logging
 import os
 
 import yoyo
+from sqlalchemy import create_engine
+
+from nyanyabot.database.tables import Tables
 
 
 class Database:
@@ -25,6 +28,9 @@ class Database:
         self.logger = logging.getLogger(__name__)
         self.connection_string = f"mysql+mysqldb://{user}:{password}@{host}:{port}/{name}?charset=utf8mb4"
         self.migrate()
+
+        self.engine = create_engine(self.connection_string, echo=True, future=True)
+        self.tables = Tables(self.engine)
 
     def migrate(self):
         """Starts yoyo-migrations."""

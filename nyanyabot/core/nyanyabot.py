@@ -3,11 +3,13 @@ from queue import Queue
 
 from telegram import Bot
 from telegram.error import Unauthorized
-from telegram.ext import Defaults, Updater, Dispatcher, JobQueue
+from telegram.ext import Defaults, Updater, JobQueue
 from telegram.utils.request import Request
 
 from nyanyabot.core.configuration import Configuration
 from nyanyabot.core.constants import Constants
+from nyanyabot.core.dispatcher import Dispatcher
+from nyanyabot.database.database import Database
 
 
 class NyaNyaBot:
@@ -20,6 +22,9 @@ class NyaNyaBot:
 
     def __init__(self, config: Configuration):
         self.config = config
+        self.database = Database(config.database_name, config.database_user, config.database_password,
+                                 config.database_host, config.database_port)
+
         self.logger = logging.getLogger(__name__)
         self.logger.info("Starting up bot")
 
@@ -38,6 +43,7 @@ class NyaNyaBot:
                                 ),
                                 defaults=defaults
                         ),
+                        database=self.database,
                         update_queue=Queue(),
                         job_queue=JobQueue(),
                         workers=8,
