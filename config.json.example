@@ -1,0 +1,26 @@
+{
+  "token": "12345:abcdef",
+  "set_commands": true,
+  "superuser": [
+    777
+  ],
+  "webhook": {
+    "url": "",
+    "port": 443,
+    "interface": "127.0.0.1",
+    "path": "some_path",
+    "certificate": "certificate.crt",
+    "key": "ssl.key"
+  },
+  "error_channel": -1001337,
+  "database": {
+    "name": "database_name",
+    "host": "localhost",
+    "port": 3306,
+    "user": "root",
+    "password": "root"
+  },
+  "logging": {
+    "level": "info"
+  }
+}
