@@ -35,6 +35,6 @@ class Database:
     def migrate(self):
         """Starts yoyo-migrations."""
         backend = yoyo.get_backend(self.connection_string)
-        migrations = yoyo.read_migrations(os.path.join("datbaase", "migrations"))
+        migrations = yoyo.read_migrations(os.path.join("database", "migrations"))
         with backend.lock():
             backend.apply_migrations(backend.to_apply(migrations))
