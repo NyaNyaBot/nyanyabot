@@ -41,6 +41,13 @@ class Configuration:
             self.webhook_private_key = config.get("webhook").get("key")
             self.webhook_port = config.get("webhook").get("port", 443)
 
+        # Database config
+        self.database_name = config.get("database").get("name")
+        self.database_user = config.get("database").get("user")
+        self.database_password = config.get("database").get("password")
+        self.database_host = config.get("database").get("host", "localhost")
+        self.database_port = config.get("database").get("port", 3306)
+
         # Rest of the config
         self.superuser = set(config.get("superuser", []))
         self.set_commands_enabled = config.get("set_commands", False)
