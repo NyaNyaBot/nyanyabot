@@ -19,7 +19,6 @@ def main() -> None:
     args = parse_arguments()
     config = Configuration(args.configpath)
     bot = NyaNyaBot(config)
-    eval()
     bot.start()
 
 
