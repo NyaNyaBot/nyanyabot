@@ -54,7 +54,7 @@ jobs:
         run: "${{ matrix.testenv }} ${{ matrix.args }}"
 
       - name: Upload SARIF file
-        if: "matrix.testenv == 'bandit'"
+        if: always() && "matrix.testenv == 'bandit'"
         uses: github/codeql-action/upload-sarif@v1
         with:
           sarif_file: results.sarif
