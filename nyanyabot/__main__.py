@@ -18,7 +18,6 @@ def parse_arguments() -> argparse.Namespace:
 def main() -> None:
     args = parse_arguments()
     config = Configuration(args.configpath)
-    eval()
     bot = NyaNyaBot(config)
     bot.start()
 
