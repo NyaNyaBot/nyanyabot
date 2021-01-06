@@ -1,3 +1,4 @@
 bandit>=1.7.*
+bandit-sarif-formatter
 mypy
 pylint>=2.6.*
