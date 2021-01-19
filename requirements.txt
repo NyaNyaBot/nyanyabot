@@ -3,4 +3,4 @@ python-telegram-bot==13.1
 pytz
 requests<=3.0.0
 sqlalchemy==1.4.0b1
-yoyo-migrations==7.2.*
+yoyo-migrations==7.3.*
