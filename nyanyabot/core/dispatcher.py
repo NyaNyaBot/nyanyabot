@@ -1,8 +1,6 @@
-from typing import Union
-
 from sqlalchemy import delete
 from sqlalchemy.dialects.mysql import insert
-from telegram import Update, TelegramError
+from telegram import Update
 from telegram.ext import dispatcher, Filters
 
 from nyanyabot.database.database import Database
@@ -18,10 +16,7 @@ class Dispatcher(dispatcher.Dispatcher):
         super().__init__(*args, **kwargs)
         self.database = database
 
-    # TODO: Remove pylint ignore when Pylint supports Python 3.9:
-    #       https://github.com/PyCQA/pylint/issues/3882#issuecomment-745148724
-    def process_update(self,
-                       update: Union[str, Update, TelegramError]) -> None:  # pylint: disable=unsubscriptable-object
+    def process_update(self, update: object) -> None:
         if isinstance(update, Update) and update.effective_message:
             if update.effective_chat and Filters.chat_type.groups(update):
                 with self.database.engine.begin() as conn:
