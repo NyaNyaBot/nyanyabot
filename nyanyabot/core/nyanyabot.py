@@ -1,9 +1,12 @@
+import html
 import logging
+import traceback
+from io import StringIO
 from queue import Queue
 
-from telegram import Bot
+from telegram import Bot, ParseMode
 from telegram.error import Unauthorized
-from telegram.ext import Defaults, Updater, JobQueue
+from telegram.ext import Defaults, Updater, JobQueue, CallbackContext
 from telegram.utils.request import Request
 
 from nyanyabot.core.configuration import Configuration
@@ -19,6 +22,39 @@ class NyaNyaBot:
     Args:
         config (:obj:`Configuration`): Initialized Configuration class
     """
+
+    def error_handler(self, update: object, context: CallbackContext) -> None:
+        if not context.error:
+            self.logger.error("Unknown exception happened.")
+            if self.config.error_channel:
+                context.bot.send_message(
+                        chat_id=self.config.error_channel,
+                        text="❌❌❌ <strong>Eine unbekannte Exception ist aufgetreten.</strong>",
+                        parse_mode=ParseMode.HTML
+                )
+            return
+
+        trace = ''.join(traceback.format_tb(context.error.__traceback__))
+
+        if update:
+            log_msg = f"Exception happened with update:\n" \
+                      f"{update}\n\n" \
+                      f"Traceback (most recent call last):\n" \
+                      f"{trace}{context.error}"
+        else:
+            log_msg = f"Exception happened:\n{trace}{context.error}"
+
+        self.logger.error(log_msg)
+
+        if self.config.error_channel:
+            context.bot.send_document(
+                    chat_id=self.config.error_channel,
+                    caption=f"❌❌❌ <strong>Update verursachte Fehler</strong>:\n"
+                            f"<code>{html.escape(str(context.error))}</code>",
+                    document=StringIO(log_msg),
+                    filename="traceback.txt",
+                    parse_mode=ParseMode.HTML
+            )
 
     def __init__(self, config: Configuration):
         self.config = config
@@ -50,6 +86,7 @@ class NyaNyaBot:
                 ),
         )
         self.updater.dispatcher.job_queue.set_dispatcher(self.updater.dispatcher)  # type: ignore
+        self.updater.dispatcher.add_error_handler(self.error_handler, run_async=True)
 
         try:
             self.logger.info("Logged in as @%s: %s (%s)",
