@@ -26,6 +26,12 @@ class NyaNyaBot:
     def error_handler(self, update: object, context: CallbackContext) -> None:
         if not context.error:
             self.logger.error("Unknown exception happened.")
+            if self.config.error_channel:
+                context.bot.send_message(
+                        chat_id=self.config.error_channel,
+                        text="❌❌❌ <strong>Eine unbekannte Exception ist aufgetreten.</strong>",
+                        parse_mode=ParseMode.HTML
+                )
             return
 
         trace = ''.join(traceback.format_tb(context.error.__traceback__))
