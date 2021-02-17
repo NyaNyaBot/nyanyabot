@@ -62,6 +62,7 @@ confidence=
 # --disable=W".
 disable=missing-function-docstring,
         missing-module-docstring,
+        missing-class-docstring,
         print-statement,
         parameter-unpacking,
         unpacking-in-except,
@@ -142,7 +143,8 @@ disable=missing-function-docstring,
         exception-escape,
         comprehension-escape,
         too-many-instance-attributes,
-        too-few-public-methods
+        too-few-public-methods,
+        broad-except
 
 # Enable the message, report, category or checker with the given id(s). You can
 # either give multiple identifier separated by comma (,) or put this option
@@ -254,6 +256,8 @@ good-names=i,
            k,
            ex,
            Run,
+           db,
+           plugin,
            _
 
 # Good variable names regexes, separated by a comma. If names match any regex,

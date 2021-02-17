@@ -1,9 +1,13 @@
 import html
 import logging
+import operator
+import sys
 import traceback
+from importlib import import_module
 from io import StringIO
 from queue import Queue
 
+from sqlalchemy import select
 from telegram import Bot, ParseMode
 from telegram.error import Unauthorized
 from telegram.ext import Defaults, Updater, JobQueue, CallbackContext
@@ -60,6 +64,7 @@ class NyaNyaBot:
         self.config = config
         self.database = Database(config.database_name, config.database_user, config.database_password,
                                  config.database_host, config.database_port)
+        self.plugins = []  # type: ignore
 
         self.logger = logging.getLogger(__name__)
         self.logger.info("Starting up bot")
@@ -88,6 +93,61 @@ class NyaNyaBot:
         self.updater.dispatcher.job_queue.set_dispatcher(self.updater.dispatcher)  # type: ignore
         self.updater.dispatcher.add_error_handler(self.error_handler, run_async=True)
 
+        self.load_plugins()
+        if self.config.set_commands_enabled:
+            self.setup_commands()
+
+    def load_plugins(self):
+        plugins = []
+        group = 0
+
+        # Load enabled plugins from database
+        with self.database.engine.begin() as conn:
+            for row in conn.execute(
+                    select(self.database.tables.bot_plugins.c.name).where(
+                            self.database.tables.bot_plugins.c.enabled == 1
+                    )
+            ):
+                plugins.append(row.name)
+
+        # Setup plugins
+        for num, plugin in enumerate(plugins):
+            self.logger.info("(%s/%s) Loading plugin: %s", num + 1, len(plugins), plugin)
+            try:
+                import_module("nyanyabot.plugin." + plugin)
+            except Exception:
+                self.logger.error("".join(traceback.format_exc()))
+                continue
+
+            # Setup handlers, jobs and commands
+            module = sys.modules.get("nyanyabot.plugin." + plugin)
+            if hasattr(module, "plugin"):  # Is Plugin?
+                try:
+                    plugin_module = module.plugin(self)  # type: ignore
+                except Exception:
+                    self.logger.error("".join(traceback.format_exc()))
+                    continue
+                for handler in plugin_module.handlers:
+                    handler.name = plugin_module.name
+                    self.updater.dispatcher.add_handler(handler, group=group)
+                    group += 1
+
+                self.plugins.append(plugin_module)
+
+    def setup_commands(self):
+        commands = []
+        for plugin in self.plugins:
+            for command in plugin.commands:
+                commands.append(command)
+
+        self.logger.info("Setting commands...")
+        if len(commands) > 100:
+            self.logger.warning("More than 100 commands detected, skipping")
+        else:
+            commands.sort(key=operator.attrgetter("command"))
+            self.updater.bot.set_my_commands(commands)
+
+    def start(self):
         try:
             self.logger.info("Logged in as @%s: %s (%s)",
                              self.updater.bot.first_name,
@@ -97,7 +157,6 @@ class NyaNyaBot:
             self.logger.critical("Login failed, check your bot token")
             return
 
-    def start(self):
         if self.config.webhook_enabled:
             self.logger.info("Setting webhook")
             if self.updater.bot.set_webhook(

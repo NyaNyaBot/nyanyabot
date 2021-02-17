@@ -29,7 +29,7 @@ class Database:
         self.connection_string = f"mysql+mysqldb://{user}:{password}@{host}:{port}/{name}?charset=utf8mb4"
         self.migrate()
 
-        self.engine = create_engine(self.connection_string, echo=True, future=True)
+        self.engine = create_engine(self.connection_string, echo=False, future=True)
         self.tables = Tables(self.engine)
 
     def migrate(self):
