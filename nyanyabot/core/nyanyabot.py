@@ -117,7 +117,11 @@ class NyaNyaBot:
             try:
                 module = import_module("nyanyabot.plugin." + plugin)
             except ModuleNotFoundError:
-                module = import_module("plugins." + plugin)
+                try:
+                    module = import_module("plugins." + plugin)
+                except Exception:
+                    self.logger.error("".join(traceback.format_exc()))
+                    continue
             except Exception:
                 self.logger.error("".join(traceback.format_exc()))
                 continue
