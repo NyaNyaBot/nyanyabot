@@ -52,6 +52,7 @@ class Configuration:
         self.superuser = set(config.get("superuser", []))
         self.set_commands_enabled = config.get("set_commands", False)
         self.error_channel = config.get("error_channel")
+        self.plugin_dirs = config.get("plugin_dirs", [])
 
     def setup_logging(self, logging_level: str = "WARNING") -> None:
         logging.basicConfig(format="%(asctime)s - %(levelname)-8s - %(name)s - %(message)s", level=logging.DEBUG)

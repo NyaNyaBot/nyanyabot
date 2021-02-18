@@ -94,8 +94,6 @@ class NyaNyaBot:
         self.updater.dispatcher.add_error_handler(self.error_handler, run_async=True)
 
         self.load_plugins()
-        if self.config.set_commands_enabled:
-            self.setup_commands()
 
     def load_plugins(self):
         plugins = []
@@ -111,22 +109,28 @@ class NyaNyaBot:
                 plugins.append(row.name)
 
         # Setup plugins
+        for plugin_dir in self.config.plugin_dirs:
+            sys.path.append(plugin_dir)
+
         for num, plugin in enumerate(plugins):
             self.logger.info("(%s/%s) Loading plugin: %s", num + 1, len(plugins), plugin)
             try:
-                import_module("nyanyabot.plugin." + plugin)
+                module = import_module("nyanyabot.plugin." + plugin)
+            except ModuleNotFoundError:
+                module = import_module("plugins." + plugin)
             except Exception:
                 self.logger.error("".join(traceback.format_exc()))
                 continue
 
             # Setup handlers, jobs and commands
-            module = sys.modules.get("nyanyabot.plugin." + plugin)
             if hasattr(module, "plugin"):  # Is Plugin?
                 try:
+                    # Call the "plugin" variable which references the specific plugin class
                     plugin_module = module.plugin(self)  # type: ignore
                 except Exception:
                     self.logger.error("".join(traceback.format_exc()))
                     continue
+
                 for handler in plugin_module.handlers:
                     handler.name = plugin_module.name
                     self.updater.dispatcher.add_handler(handler, group=group)
@@ -183,6 +187,9 @@ class NyaNyaBot:
                     clean=True,
                     allowed_updates=["message", "edited_message", "inline_query", "callback_query"]
             )
+
+        if self.config.set_commands_enabled:
+            self.setup_commands()
 
         self.logger.info("Bot completely loaded")
         self.updater.idle()
