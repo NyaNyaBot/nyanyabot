@@ -56,6 +56,7 @@ class PluginLoader:
 
                 for handler in plugin_module.handlers:
                     handler.name = plugin_module.name
+                    handler.nyanyabot = self.nyanyabot
                     self.nyanyabot.updater.dispatcher.add_handler(handler, group=group)
                     group += 1
 
