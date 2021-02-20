@@ -1,10 +1,9 @@
 import re
-from typing import Union, Pattern, Optional
+from typing import Union, Pattern, Optional, Any
 
 import telegram.ext
 from telegram import Update
 from telegram.bot import RT
-from telegram.ext.handler import UT
 from telegram.ext.utils.promise import Promise
 
 from nyanyabot.core.util import TimeUtil
@@ -16,25 +15,25 @@ class CallbackQueryHandler(Handler, telegram.ext.CallbackQueryHandler):
     Extends telegram.ext.callbackqueryhandler.CallbackQueryHandler
     Added arguments:
         case_sensitive (optional[bool]): Be case sensitive when matching. Default: ``True``
-        cooldown (optional[float]): Time between message and when the CallbackQuery should pe processed. Default: ``0.0``
+        cooldown (optional[float]): Time between message and when the query should pe processed. Default: ``0.0``
         delete_button (optional[bool]): Delete original callback query button. Default: ``True``
     """
     pattern: re.Pattern
 
     def __init__(self,
-                 *args,
+                 *args: Any,
                  pattern: Union[str, Pattern] = None,
                  case_sensitive: bool = True,
                  cooldown: float = 0.0,
                  delete_button: bool = True,
                  log_to_debug: bool = False,
-                 **kwargs):
+                 **kwargs: Any):
         if isinstance(pattern, str):
             if not case_sensitive:
                 self.pattern = re.compile(pattern, re.IGNORECASE)
             else:
                 self.pattern = re.compile(pattern)
-        else:
+        elif isinstance(pattern, Pattern):
             if case_sensitive:
                 raise ValueError("case_sensitive can't be set when pattern is already a compiled regex.")
             self.pattern = pattern
@@ -46,16 +45,18 @@ class CallbackQueryHandler(Handler, telegram.ext.CallbackQueryHandler):
                                                    log_to_debug=log_to_debug,
                                                    **kwargs)
 
-    def handle_update(self, update: UT, *args, **kwargs) -> Union[RT, Promise]:
+    def handle_update(self, update: Update, *args: Any, **kwargs: Any) \
+            -> Union[RT, Promise]:  # pylint: disable=arguments-differ
         if self.delete_button:
             try:
-                update.callback_query.edit_message_reply_markup(reply_markup="")
+                if update.callback_query:
+                    update.callback_query.edit_message_reply_markup(reply_markup="")
             except telegram.TelegramError:
                 pass
         return super(CallbackQueryHandler, self).handle_update(update, *args, **kwargs)
 
     def check_update(self, update: object) -> Optional[Union[bool, object]]:
-        return_arg = super(Handler, self).check_update(update)
+        return_arg = super(CallbackQueryHandler, self).check_update(update)
 
         if return_arg and isinstance(update, Update):  # Matched, will be handled by plugin
             if super(CallbackQueryHandler, self).check_update(update):  # Whitelist check
@@ -71,11 +72,10 @@ class CallbackQueryHandler(Handler, telegram.ext.CallbackQueryHandler):
                         )
                         return None
                 return return_arg
-            else:
-                update.callback_query.answer(
-                        text="Dieses Plugin kann nicht genutzt werden.",
-                        show_alert=True
-                )
+            update.callback_query.answer(
+                    text="Dieses Plugin kann nicht genutzt werden.",
+                    show_alert=True
+            )
         return None
 
     def __repr__(self):

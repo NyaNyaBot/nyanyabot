@@ -144,7 +144,8 @@ disable=missing-function-docstring,
         comprehension-escape,
         too-many-instance-attributes,
         too-few-public-methods,
-        broad-except
+        broad-except,
+        super-with-arguments
 
 # Enable the message, report, category or checker with the given id(s). You can
 # either give multiple identifier separated by comma (,) or put this option

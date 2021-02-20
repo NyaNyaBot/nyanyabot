@@ -1,6 +1,6 @@
 import logging
 from abc import ABC
-from typing import Union, Optional
+from typing import Union, Optional, Any
 
 import telegram.ext
 from telegram import Update
@@ -20,7 +20,7 @@ class Handler(telegram.ext.Handler, ABC):
     nyanyabot: Optional[NyaNyaBot]
 
     def __init__(self,
-                 *args,
+                 *args: Any,
                  privileged: bool = False,
                  log_to_debug: bool = True,
                  **kwargs):
@@ -31,7 +31,7 @@ class Handler(telegram.ext.Handler, ABC):
         self.name = ""  # Will be set to the plugin's name at runtime
         self.nyanyabot = None  # Will be set to the NyaNyaBot instance at runtime
 
-    def handle_update(self, *args, **kwargs) -> Union[RT, Promise]:
+    def handle_update(self, *args, **kwargs) -> Union[RT, Promise]:  # pylint: disable=signature-differs
         if self.log_to_debug:
             self.logger.debug(self)
         else:

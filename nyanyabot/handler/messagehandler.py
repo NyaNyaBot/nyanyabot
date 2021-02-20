@@ -1,9 +1,7 @@
-from typing import Union, Optional
+from typing import Union, Optional, Any, Dict
 
 import telegram.ext
 from telegram import Update
-from telegram.bot import RT
-from telegram.ext.utils.promise import Promise
 
 from nyanyabot.core.util import Util
 from nyanyabot.handler.handler import Handler
@@ -18,11 +16,11 @@ class MessageHandler(Handler, telegram.ext.MessageHandler):
     """
 
     def __init__(self,
-                 *args,
+                 *args: Any,
                  group_only: bool = False,
                  handle_edits: bool = False,
                  log_to_debug: bool = True,
-                 **kwargs):
+                 **kwargs: Any):
         self.handle_edits = handle_edits
         self.group_only = group_only
         super(MessageHandler, self).__init__(
@@ -30,11 +28,8 @@ class MessageHandler(Handler, telegram.ext.MessageHandler):
                 log_to_debug=log_to_debug,
                 **kwargs)
 
-    def handle_update(self, *args, **kwargs) -> Union[RT, Promise]:
-        return super(MessageHandler, self).handle_update(*args, **kwargs)
-
-    def check_update(self, update: object) -> Optional[Union[bool, object]]:
-        if isinstance(update, Update) and (update.message or update.edited_message):
+    def check_update(self, update: object) -> Optional[Union[bool, Dict[str, object]]]:
+        if isinstance(update, Update) and (update.message or update.edited_message) and update.effective_message:
             # Edited message
             if update.edited_message:
                 if not self.handle_edits:

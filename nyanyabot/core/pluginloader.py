@@ -3,8 +3,12 @@ import operator
 import sys
 import traceback
 from importlib import import_module
+from typing import TYPE_CHECKING
 
 from sqlalchemy import select
+
+if TYPE_CHECKING:
+    from nyanyabot.core.plugin import Plugin
 
 
 class PluginLoader:
@@ -49,7 +53,7 @@ class PluginLoader:
             if hasattr(module, "plugin"):  # Is Plugin?
                 try:
                     # Call the "plugin" variable which references the specific plugin class
-                    plugin_module = module.plugin(self.nyanyabot)  # type: ignore
+                    plugin_module: Plugin = module.plugin(self.nyanyabot)  # type: ignore
                 except Exception:
                     self.logger.error("".join(traceback.format_exc()))
                     continue
