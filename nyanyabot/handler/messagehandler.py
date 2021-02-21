@@ -1,56 +1,77 @@
-from typing import Union, Optional, Any, Dict
+import logging
+from typing import Any, Optional, Union, Dict
 
-import telegram.ext
 from telegram import Update
+from telegram.ext import messagehandler
+from telegram.ext.handler import RT
+from telegram.ext.utils.promise import Promise
 
 from nyanyabot.core.util import Util
-from nyanyabot.handler.handler import Handler
 
 
-class MessageHandler(Handler, telegram.ext.MessageHandler):
+class MessageHandler(messagehandler.MessageHandler):
     """
     Extends telegram.ext.messagehandler.MessageHandler
     Added arguments:
         group_only (optional[bool]): Only run this handler in chat groups. Default: ``False``
         handle_edits (optional[bool]): Processes edited message if set to True. Default: ``False``
+        privileged (optional[bool]): Shall this only match when sender is an admin? Default: ``False``
+        log_to_debug (optional[bool]): Logs to DEBUG instead of INFO. Default: ``True``
     """
+    logger = logging.getLogger(__name__)
 
-    def __init__(self,
-                 *args: Any,
-                 group_only: bool = False,
-                 handle_edits: bool = False,
-                 log_to_debug: bool = True,
-                 **kwargs: Any):
+    def __init__(
+            self,
+            *args: Any,
+            group_only: bool = False,
+            handle_edits: bool = False,
+            privileged: bool = False,
+            log_to_debug: bool = True,
+            **kwargs: Any,
+    ):
+        super().__init__(*args, **kwargs)
         self.handle_edits = handle_edits
         self.group_only = group_only
-        super(MessageHandler, self).__init__(
-                *args,
-                log_to_debug=log_to_debug,
-                **kwargs)
+        self.privileged = privileged
+        self.log_to_debug = log_to_debug
+        self.name = ""
+        self.nyanyabot = None  # type: Any
 
     def check_update(self, update: object) -> Optional[Union[bool, Dict[str, object]]]:
-        if isinstance(update, Update) and (update.message or update.edited_message) and update.effective_message:
-            # Edited message
-            if update.edited_message:
-                if not self.handle_edits:
-                    return None
+        if isinstance(update, Update) and update.effective_message:
+            if self.group_only and not Util.is_group(update):
+                self.logger.debug("group_only set to True and not in a group")
+                return False
+
+            if update.edited_message and not self.handle_edits:
+                self.logger.debug("Edited message, but shouldn't be handled")
+                return False
 
             # Add caption as text
             if update.effective_message.caption:
                 update.effective_message.text = update.effective_message.caption
 
-            if self.group_only and not Util.is_group(update):
-                self.logger.debug("group_only set to True and not in a group")
-                return None
+            return_args = super().check_update(update)
+            if return_args:  # Will be handled by plugin
+                if self.privileged and update.effective_user:
+                    self.logger.debug("Superuser Check")
+                    if update.effective_user.id not in self.nyanyabot.config.superuser:
+                        self.logger.debug("Privileged handler and user not a superuser")
+                        return False
+                return return_args
+        return False
 
-            return_arg = self.filters(update)
+    # pylint: disable=signature-differs
+    def handle_update(
+            self,
+            *args: Any,
+            **kwargs: Any
+    ) -> Union[RT, Promise]:
+        if self.log_to_debug:
+            self.logger.debug(self)
         else:
-            return None
-
-        if return_arg:  # Matched, will be handled by plugin
-            if super(MessageHandler, self).check_update(update):  # Whitelist checks
-                return return_arg
-        return None
+            self.logger.info(self)
+        return super().handle_update(*args, **kwargs)
 
     def __repr__(self):
         return f"MessageHandler for {self.name}: {self.filters}"

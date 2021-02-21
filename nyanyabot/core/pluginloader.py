@@ -53,14 +53,15 @@ class PluginLoader:
             if hasattr(module, "plugin"):  # Is Plugin?
                 try:
                     # Call the "plugin" variable which references the specific plugin class
-                    plugin_module: Plugin = module.plugin(self.nyanyabot)  # type: ignore
+                    # pylint: disable=used-before-assignment
+                    plugin_module: Plugin = module.plugin(self.nyanyabot)  # type:ignore
                 except Exception:
                     self.logger.error("".join(traceback.format_exc()))
                     continue
 
                 for handler in plugin_module.handlers:
-                    handler.name = plugin_module.name
-                    handler.nyanyabot = self.nyanyabot
+                    handler.name = plugin_module.name  # type: ignore
+                    handler.nyanyabot = self.nyanyabot  # type: ignore
                     self.nyanyabot.updater.dispatcher.add_handler(handler, group=group)
                     group += 1
 
