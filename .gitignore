@@ -15,5 +15,6 @@ venv.bak/
 build/
 nyanyabot.egg-info/
 dist/
+user_plugins/
 
 config.json

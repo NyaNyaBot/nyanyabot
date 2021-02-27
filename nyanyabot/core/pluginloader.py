@@ -1,5 +1,6 @@
 import logging
 import operator
+import os
 import sys
 import traceback
 from importlib import import_module
@@ -7,20 +8,44 @@ from typing import TYPE_CHECKING
 
 from sqlalchemy import select
 
+import nyanyabot.plugin
+
 if TYPE_CHECKING:
+    from nyanyabot.core.nyanyabot import NyaNyaBot
     from nyanyabot.core.plugin import Plugin
 
 
 class PluginLoader:
-    def __init__(self, nyanyabot):
-        self.nyanyabot = nyanyabot
+    def __init__(self, nyanyabot_instance: 'NyaNyaBot'):
+        self.nyanyabot = nyanyabot_instance
         self.logger = logging.getLogger(__name__)
+        self.core_plugins = []
         self.plugins = []
-        self.load_plugins()
+        self.load_core_plugins()
+        self.load_user_plugins()
 
-    def load_plugins(self):
-        plugins = []
+    def load_core_plugins(self):
         group = 0
+
+        for num, plugin in enumerate(nyanyabot.plugin.__all__):
+            self.logger.info("(%s/%s) Loading core plugin: %s", num + 1, len(nyanyabot.plugin.__all__), plugin)
+            module = import_module("nyanyabot.plugin." + plugin)
+            if hasattr(module, "plugin"):  # Is Plugin?
+                # Call the "plugin" variable which references the specific plugin class
+                # pylint: disable=used-before-assignment
+                plugin_module: Plugin = module.plugin(self.nyanyabot)  # type:ignore
+
+                for handler in plugin_module.handlers:
+                    handler.name = plugin_module.name  # type: ignore
+                    handler.nyanyabot = self.nyanyabot  # type: ignore
+                    self.nyanyabot.updater.dispatcher.add_handler(handler, group=group)
+                    group += 1
+
+                self.core_plugins.append(plugin_module)
+
+    def load_user_plugins(self):
+        plugins = []
+        group = len(self.core_plugins)
 
         # Load enabled plugins from database
         with self.nyanyabot.database.engine.begin() as conn:
@@ -32,19 +57,13 @@ class PluginLoader:
                 plugins.append(row.name)
 
         # Setup plugins
-        for plugin_dir in self.nyanyabot.config.plugin_dirs:
-            sys.path.append(plugin_dir)
+        for plugin_dir in self.nyanyabot.config.plugin_modules:
+            sys.path.append(os.path.join("..", "user_plugins", plugin_dir))
 
         for num, plugin in enumerate(plugins):
             self.logger.info("(%s/%s) Loading plugin: %s", num + 1, len(plugins), plugin)
             try:
-                module = import_module("nyanyabot.plugin." + plugin)
-            except ModuleNotFoundError:
-                try:
-                    module = import_module("plugins." + plugin)
-                except Exception:
-                    self.logger.error("".join(traceback.format_exc()))
-                    continue
+                module = import_module("plugins." + plugin)
             except Exception:
                 self.logger.error("".join(traceback.format_exc()))
                 continue
