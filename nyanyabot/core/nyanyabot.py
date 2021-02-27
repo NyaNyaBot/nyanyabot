@@ -90,6 +90,8 @@ class NyaNyaBot:
         self.updater.dispatcher.add_error_handler(self.error_handler, run_async=True)
 
         self.plugin_loader = PluginLoader(self)
+        self.plugin_loader.load_core_plugins()
+        self.plugin_loader.load_user_plugins()
 
     def start(self):
         try:

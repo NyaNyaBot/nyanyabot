@@ -13,6 +13,7 @@
     "key": "ssl.key"
   },
   "error_channel": -1001337,
+  "plugin_modules": ["main"],
   "database": {
     "name": "database_name",
     "host": "localhost",

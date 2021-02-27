@@ -24,8 +24,6 @@ class PluginLoader:
         self.logger = logging.getLogger(__name__)
         self.core_plugins = []
         self.plugins = []
-        self.load_core_plugins()
-        self.load_user_plugins()
 
     def load_core_plugins(self):
         group = 0
@@ -92,6 +90,10 @@ class PluginLoader:
     def setup_commands(self):
         commands = []
         for plugin in self.plugins:
+            for command in plugin.commands:
+                commands.append(command)
+
+        for plugin in self.core_plugins:
             for command in plugin.commands:
                 commands.append(command)
 
