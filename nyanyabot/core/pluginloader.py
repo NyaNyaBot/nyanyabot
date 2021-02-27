@@ -4,7 +4,7 @@ import os
 import sys
 import traceback
 from importlib import import_module
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, List
 
 from sqlalchemy import select
 
@@ -16,6 +16,9 @@ if TYPE_CHECKING:
 
 
 class PluginLoader:
+    core_plugins: List['Plugin']
+    plugins: List['Plugin']
+
     def __init__(self, nyanyabot_instance: 'NyaNyaBot'):
         self.nyanyabot = nyanyabot_instance
         self.logger = logging.getLogger(__name__)
