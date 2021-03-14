@@ -102,9 +102,32 @@ class PluginLoader:
 
         # Unload module
         modules = {name: module for name, module in sys.modules.items()
-                   if name.startswith(f"plugins.{plugin.name}")}
+                   if name.startswith(f"plugins.{plugin.name}") or name.startswith(f"nyanyabot.plugin.{plugin.name}")}
         for module_name, _ in modules.items():
             del sys.modules[module_name]
 
         # Remove from loaded plugin
         self.plugins.remove(plugin)
+
+    def reload_all_plugins(self) -> None:
+        # Remove all handlers
+        self.logger.info("Removing handlers")
+        for group in list(self.nyanyabot.updater.dispatcher.handlers.keys()):  # create a copy to avoid RuntimeErrors
+            while (group in self.nyanyabot.updater.dispatcher.handlers.keys()) and \
+                    self.nyanyabot.updater.dispatcher.handlers[group]:
+                self.nyanyabot.updater.dispatcher.remove_handler(
+                        self.nyanyabot.updater.dispatcher.handlers[group][0],
+                        group=group
+                )
+
+        # Unload all Python modules
+        self.logger.info("Unloading Python modules")
+        modules = {name: module for name, module in sys.modules.items()
+                   if name.startswith("nextbot.plugin.") or name.startswith("plugins.")}
+        for name, _ in modules.items():
+            del sys.modules[name]
+
+        self.plugins = []
+        self.group = 0
+        self.load_core_plugins()
+        self.load_user_plugins()

@@ -21,9 +21,14 @@ class PluginManager(Plugin):
             RegexHandler(rf"^/list(?:@{self.username})?$", callback=self.list_plugins, privileged=True),
             RegexHandler(rf"^/disable(?:@{self.username})? (.+)$", callback=self.disable_plugin, privileged=True),
             RegexHandler(rf"^/enable(?:@{self.username})? (.+)$", callback=self.enable_plugin, privileged=True),
+            RegexHandler(rf"^/reload(?:@{self.username})?$", callback=self.reload_all_plugins, privileged=True),
+            RegexHandler(rf"^/reload(?:@{self.username})? (.+)$", callback=self.reload_plugin, privileged=True),
         ]
         self.commands = [
-            BotCommand("list", "Listet aktive Plugins auf (nur Superuser)")
+            BotCommand("list", "Listet aktive Plugins auf (nur Superuser)"),
+            BotCommand("disable", "<Plugin> - Deaktiviert ein Plugin (nur Superuser)"),
+            BotCommand("enable", "<Plugin> - Aktiviert ein Plugin (nur Superuser)"),
+            BotCommand("reload", "[Plugin] - Lädt alle oder ein Plugin neu (nur Superuser)"),
         ]
         self.pluginloader = nyanyabot_instance.plugin_loader
 
@@ -45,26 +50,11 @@ class PluginManager(Plugin):
             tg_update.effective_message.reply_text("❌ Dies ist ein Core-Plugin und kann nicht deaktiviert werden.")
             return
 
-        with self.db.engine.begin() as conn:
-            plg = conn.execute(
-                    select(self.db.tables.bot_plugins.c.enabled).where(
-                            self.db.tables.bot_plugins.c.name == plg_name
-                    )
-            ).fetchone()
-
-        if not plg:
-            tg_update.effective_message.reply_text("❌ Plugin existiert nicht.")
-            return
-
-        if not plg.enabled:
-            tg_update.effective_message.reply_text("✅ Plugin ist nicht aktiv.")
-            return
-
         try:
             self.pluginloader.unload_plugin(plg_name)
             tg_update.effective_message.reply_text("✅ Plugin deaktiviert.")
         except ValueError:
-            tg_update.effective_message.reply_text("❌ Plugin ist nicht geladen.")
+            tg_update.effective_message.reply_text("❌ Plugin ist nicht aktiv.")
 
         with self.db.engine.begin() as conn:
             conn.execute(
@@ -115,6 +105,32 @@ class PluginManager(Plugin):
             )
 
         tg_update.effective_message.reply_text("✅ Plugin wurde aktiviert.")
+
+    @Util.send_action(ChatAction.TYPING)
+    def reload_all_plugins(self, tg_update: Update, context: CallbackContext) -> None:
+        message = tg_update.effective_message.reply_text("Alle Plugins werden neu geladen...")
+        self.pluginloader.reload_all_plugins()
+        message.edit_text("✅ Plugins neu geladen!")
+
+    @Util.send_action(ChatAction.TYPING)
+    def reload_plugin(self, tg_update: Update, context: CallbackContext) -> None:
+        plg_name = context.match[1]
+
+        message = tg_update.effective_message.reply_text("Plugin wird neu geladen...")
+        tg_update.effective_message.reply_chat_action(ChatAction.TYPING)
+
+        try:
+            self.pluginloader.unload_plugin(plg_name)
+        except ValueError:
+            message.edit_text("❌ Plugin ist nicht aktiv.")
+            return
+
+        if plg_name in nyanyabot.plugin.__all__:
+            self.pluginloader.load_plugin(f"nyanyabot.plugin.{plg_name}")  # TODO: ????
+        else:
+            self.pluginloader.load_plugin(f"plugins.{plg_name}")
+
+        message.edit_text("✅ Plugin neu geladen!")
 
 
 plugin = PluginManager
