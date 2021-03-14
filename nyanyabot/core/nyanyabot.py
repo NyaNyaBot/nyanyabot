@@ -65,7 +65,10 @@ class NyaNyaBot:
         self.logger = logging.getLogger(__name__)
         self.logger.info("Starting up bot")
 
-        defaults = Defaults(tzinfo=Constants.UTC_TIMEZONE)
+        defaults = Defaults(
+                quote=True,
+                tzinfo=Constants.UTC_TIMEZONE
+        )
         self.updater = Updater(
                 workers=None,  # type: ignore
                 defaults=defaults,

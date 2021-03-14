@@ -52,6 +52,7 @@ class CallbackQueryHandler(callbackqueryhandler.CallbackQueryHandler):
         self.log_to_debug = log_to_debug
         self.name = ""
         self.nyanyabot = None  # type: Any
+        self.group = 0  # Is set at runtime
 
     def check_update(self, update: object) -> Optional[Union[bool, object]]:
         return_args = super().check_update(update)

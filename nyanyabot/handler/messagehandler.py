@@ -36,6 +36,7 @@ class MessageHandler(messagehandler.MessageHandler):
         self.log_to_debug = log_to_debug
         self.name = ""
         self.nyanyabot = None  # type: Any
+        self.group = 0  # Is set at runtime
 
     def check_update(self, update: object) -> Optional[Union[bool, Dict[str, object]]]:
         if isinstance(update, Update) and update.effective_message:

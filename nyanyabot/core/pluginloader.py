@@ -16,37 +16,43 @@ if TYPE_CHECKING:
 
 
 class PluginLoader:
-    core_plugins: List['Plugin']
     plugins: List['Plugin']
 
     def __init__(self, nyanyabot_instance: 'NyaNyaBot'):
         self.nyanyabot = nyanyabot_instance
         self.logger = logging.getLogger(__name__)
-        self.core_plugins = []
         self.plugins = []
+        self.group = 0
+
+    def load_plugin(self, path: str) -> None:
+        module = import_module(path)
+
+        # Setup handlers, jobs and commands
+        if hasattr(module, "plugin"):  # Is Plugin?
+            # Call the "plugin" variable which references the specific plugin class
+            # pylint: disable=used-before-assignment
+            plugin_module: Plugin = module.plugin(self.nyanyabot)  # type:ignore
+
+            for handler in plugin_module.handlers:
+                handler.name = plugin_module.name  # type: ignore
+                handler.nyanyabot = self.nyanyabot  # type: ignore
+                handler.group = self.group  # type: ignore
+                self.nyanyabot.updater.dispatcher.add_handler(handler, group=self.group)
+                self.group += 1
+
+            self.plugins.append(plugin_module)
 
     def load_core_plugins(self):
-        group = 0
-
         for num, plugin in enumerate(nyanyabot.plugin.__all__):
             self.logger.info("(%s/%s) Loading core plugin: %s", num + 1, len(nyanyabot.plugin.__all__), plugin)
-            module = import_module("nyanyabot.plugin." + plugin)
-            if hasattr(module, "plugin"):  # Is Plugin?
-                # Call the "plugin" variable which references the specific plugin class
-                # pylint: disable=used-before-assignment
-                plugin_module: Plugin = module.plugin(self.nyanyabot)  # type:ignore
-
-                for handler in plugin_module.handlers:
-                    handler.name = plugin_module.name  # type: ignore
-                    handler.nyanyabot = self.nyanyabot  # type: ignore
-                    self.nyanyabot.updater.dispatcher.add_handler(handler, group=group)
-                    group += 1
-
-                self.core_plugins.append(plugin_module)
+            try:
+                self.load_plugin(f"nyanyabot.plugin.{plugin}")
+            except Exception:
+                self.logger.error("".join(traceback.format_exc()))
+                continue
 
     def load_user_plugins(self):
         plugins = []
-        group = len(self.core_plugins)
 
         # Load enabled plugins from database
         with self.nyanyabot.database.engine.begin() as conn:
@@ -64,36 +70,14 @@ class PluginLoader:
         for num, plugin in enumerate(plugins):
             self.logger.info("(%s/%s) Loading plugin: %s", num + 1, len(plugins), plugin)
             try:
-                module = import_module("plugins." + plugin)
+                self.load_plugin(f"plugins.{plugin}")
             except Exception:
                 self.logger.error("".join(traceback.format_exc()))
                 continue
 
-            # Setup handlers, jobs and commands
-            if hasattr(module, "plugin"):  # Is Plugin?
-                try:
-                    # Call the "plugin" variable which references the specific plugin class
-                    # pylint: disable=used-before-assignment
-                    plugin_module: Plugin = module.plugin(self.nyanyabot)  # type:ignore
-                except Exception:
-                    self.logger.error("".join(traceback.format_exc()))
-                    continue
-
-                for handler in plugin_module.handlers:
-                    handler.name = plugin_module.name  # type: ignore
-                    handler.nyanyabot = self.nyanyabot  # type: ignore
-                    self.nyanyabot.updater.dispatcher.add_handler(handler, group=group)
-                    group += 1
-
-                self.plugins.append(plugin_module)
-
     def setup_commands(self):
         commands = []
         for plugin in self.plugins:
-            for command in plugin.commands:
-                commands.append(command)
-
-        for plugin in self.core_plugins:
             for command in plugin.commands:
                 commands.append(command)
 
@@ -103,3 +87,24 @@ class PluginLoader:
         else:
             commands.sort(key=operator.attrgetter("command"))
             self.nyanyabot.updater.bot.set_my_commands(commands)
+
+    def unload_plugin(self, name: str) -> None:
+        for plg in self.plugins:
+            if plg.name == name:
+                plugin = plg
+                break
+        else:
+            raise ValueError("Plugin not found.")
+
+        # Unload handlers
+        for handler in plugin.handlers:
+            self.nyanyabot.updater.dispatcher.remove_handler(handler, group=handler.group)  # type: ignore
+
+        # Unload module
+        modules = {name: module for name, module in sys.modules.items()
+                   if name.startswith(f"plugins.{plugin.name}")}
+        for module_name, _ in modules.items():
+            del sys.modules[module_name]
+
+        # Remove from loaded plugin
+        self.plugins.remove(plugin)
