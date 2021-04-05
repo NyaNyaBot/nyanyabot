@@ -2,5 +2,5 @@ mysqlclient==2.0.*
 python-telegram-bot==13.2
 pytz
 requests<=3.0.0
-sqlalchemy==1.4.0b3
+sqlalchemy==1.4.5
 yoyo-migrations==7.3.*
