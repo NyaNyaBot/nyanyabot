@@ -59,6 +59,15 @@ class MessageHandler(messagehandler.MessageHandler):
                     if update.effective_user.id not in self.nyanyabot.config.superuser:
                         self.logger.debug("Privileged handler and user not a superuser")
                         return False
+
+                if Util.is_group(update):
+                    self.logger.debug("Plugin-per-chat blacklist check")
+                    if self.nyanyabot.plugin_loader.is_plugin_disabled_for_chat(
+                            update.effective_chat.id,
+                            self.name
+                    ):
+                        return False
+
                 return return_args
         return False
 

@@ -6,7 +6,7 @@ import traceback
 from importlib import import_module
 from typing import TYPE_CHECKING, List
 
-from sqlalchemy import select
+from sqlalchemy import select, func
 
 import nyanyabot.plugin
 
@@ -131,3 +131,15 @@ class PluginLoader:
         self.group = 0
         self.load_core_plugins()
         self.load_user_plugins()
+
+    def is_plugin_disabled_for_chat(self, chat_id: int, name: str) -> bool:
+        with self.nyanyabot.database.engine.begin() as conn:
+            # https://stackoverflow.com/a/12942437
+            res = conn.execute(
+                    select([func.count()]).select_from(self.nyanyabot.database.tables.bot_plugins_chat_blacklist).where(
+                            self.nyanyabot.database.tables.bot_plugins_chat_blacklist.c.chat_id == chat_id,
+                            self.nyanyabot.database.tables.bot_plugins_chat_blacklist.c.disabled_plugin == name
+                    )
+            ).fetchone()
+
+        return res[0] == 1

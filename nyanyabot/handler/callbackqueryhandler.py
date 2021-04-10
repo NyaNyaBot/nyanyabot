@@ -89,6 +89,18 @@ class CallbackQueryHandler(callbackqueryhandler.CallbackQueryHandler):
                     )
                     return False
 
+            if Util.is_group(update):
+                self.logger.debug("Plugin-per-chat blacklist check")
+                if self.nyanyabot.plugin_loader.is_plugin_disabled_for_chat(
+                        update.effective_chat.id,
+                        self.name
+                ):
+                    update.callback_query.answer(
+                            text="Dieses Plugin ist für diese Gruppe deaktiviert worden.",
+                            show_alert=True
+                    )
+                    return False
+
             return return_args
 
         return False

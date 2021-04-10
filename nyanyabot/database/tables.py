@@ -18,3 +18,4 @@ class Tables:
         self.link_bot_chats_id__bot_users_id = Table("lnk_bot_chats_id__bot_users_id", metadata,
                                                      autoload_with=db_engine)
         self.bot_plugins = Table("bot_plugins", metadata, autoload_with=db_engine)
+        self.bot_plugins_chat_blacklist = Table("bot_plugins_chat_blacklist", metadata, autoload_with=db_engine)
