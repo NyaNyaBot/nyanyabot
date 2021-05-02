@@ -108,28 +108,20 @@ class NyaNyaBot:
 
         if self.config.webhook_enabled:
             self.logger.info("Setting webhook")
-            if self.updater.bot.set_webhook(
-                    url=self.config.webhook_url,
+            self.updater.start_webhook(
+                    listen=self.config.webhook_interface,
+                    port=self.config.webhook_port,
+                    webhook_url=self.config.webhook_url,
+                    url_path=self.config.webhook_path,
+                    cert=self.config.webhook_certificate,
+                    key=self.config.webhook_private_key,
+                    drop_pending_updates=True,
                     allowed_updates=["message", "edited_message", "inline_query", "callback_query"]
-            ):
-                self.logger.info("Starting Tornado")
-                self.updater.start_webhook(
-                        listen=self.config.webhook_interface,
-                        port=self.config.webhook_port,
-                        webhook_url=self.config.webhook_url,
-                        url_path=self.config.webhook_path,
-                        cert=self.config.webhook_certificate,
-                        key=self.config.webhook_private_key,
-                        clean=True,
-                        allowed_updates=["message", "edited_message", "inline_query", "callback_query"]
-                )
-            else:
-                self.logger.critical("Webhook could not be set.")
-                return
+            )
         else:
             self.logger.info("Starting long-polling")
             self.updater.start_polling(
-                    clean=True,
+                    drop_pending_updates=True,
                     allowed_updates=["message", "edited_message", "inline_query", "callback_query"]
             )
 
