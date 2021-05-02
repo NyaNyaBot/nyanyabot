@@ -12,6 +12,7 @@ from telegram.utils.request import Request
 from nyanyabot.core.configuration import Configuration
 from nyanyabot.core.constants import Constants
 from nyanyabot.core.dispatcher import Dispatcher
+from nyanyabot.core.pluginloader import PluginLoader
 from nyanyabot.database.database import Database
 
 
@@ -64,7 +65,10 @@ class NyaNyaBot:
         self.logger = logging.getLogger(__name__)
         self.logger.info("Starting up bot")
 
-        defaults = Defaults(tzinfo=Constants.UTC_TIMEZONE)
+        defaults = Defaults(
+                quote=True,
+                tzinfo=Constants.UTC_TIMEZONE
+        )
         self.updater = Updater(
                 workers=None,  # type: ignore
                 defaults=defaults,
@@ -88,6 +92,11 @@ class NyaNyaBot:
         self.updater.dispatcher.job_queue.set_dispatcher(self.updater.dispatcher)  # type: ignore
         self.updater.dispatcher.add_error_handler(self.error_handler, run_async=True)
 
+        self.plugin_loader = PluginLoader(self)
+        self.plugin_loader.load_core_plugins()
+        self.plugin_loader.load_user_plugins()
+
+    def start(self):
         try:
             self.logger.info("Logged in as @%s: %s (%s)",
                              self.updater.bot.first_name,
@@ -97,7 +106,6 @@ class NyaNyaBot:
             self.logger.critical("Login failed, check your bot token")
             return
 
-    def start(self):
         if self.config.webhook_enabled:
             self.logger.info("Setting webhook")
             if self.updater.bot.set_webhook(
@@ -124,6 +132,9 @@ class NyaNyaBot:
                     clean=True,
                     allowed_updates=["message", "edited_message", "inline_query", "callback_query"]
             )
+
+        if self.config.set_commands_enabled:
+            self.plugin_loader.setup_commands()
 
         self.logger.info("Bot completely loaded")
         self.updater.idle()
